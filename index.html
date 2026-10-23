@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stavitelé mostu</title>
+<meta name="description" content="Výuková aplikace pro 4. ročník: písemné násobení a dělení do 10 000. Mgr. Helena Gřivová (vytvořeno pomocí AI).">
+<style>
+:root{
+  --navy:#0A1B30; --navy2:#10294A; --blue:#173B66; --line:rgba(190,220,255,.10);
+  --paper:#F7F2E7; --paper2:#EFE7D6; --ink:#14243C; --muted:#5B6B80;
+  --gold:#E3A63A; --gold2:#F5CD7A; --gold3:#B9802A;
+  --ok:#2F9A6A; --okbg:#E3F3EA; --hint:#C2662F; --hintbg:#FBEBDD;
+  --cw:2.55em; --fs:19px;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Verdana,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:var(--fs)}
+body{margin:0;min-height:100vh;font-family:var(--sans);color:var(--paper);
+  background:radial-gradient(1200px 600px at 70% -10%,#1B4473 0%,transparent 60%),linear-gradient(180deg,var(--navy2),var(--navy) 70%);
+  background-color:var(--navy);}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:32px 32px;mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.35));}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px 40px;position:relative}
+
+/* Hlavička */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px}
+.logo svg{width:46px;height:46px;flex:none}
+.logo h1{font-family:var(--serif);font-weight:600;font-size:1.6rem;margin:0;letter-spacing:.02em;
+  background:linear-gradient(90deg,var(--gold2),var(--gold) 60%,#fff2cf);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{margin:2px 0 0;font-size:.74rem;color:#B9C8DC;letter-spacing:.06em;text-transform:uppercase}
+.ovladani{display:flex;gap:8px;align-items:center}
+.btn-ghost{min-height:44px;min-width:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(245,205,122,.35);
+  background:rgba(255,255,255,.04);color:var(--paper);font-size:.8rem;transition:background .2s,border-color .2s}
+.btn-ghost:hover{background:rgba(245,205,122,.12);border-color:var(--gold)}
+.hrac{font-size:.8rem;color:#C9D6E8;padding:0 6px}
+.hrac b{color:var(--gold2);font-weight:600}
+
+/* Scéna */
+.scena-box{position:relative;border-radius:22px;overflow:hidden;border:1px solid rgba(245,205,122,.28);
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.04);transition:height .7s ease}
+.scena-box svg{display:block;width:100%;height:100%}
+body.rezim-hub .scena-box, body.rezim-intro .scena-box{height:clamp(260px,46vw,500px)}
+body.rezim-mise .scena-box{height:clamp(150px,20vw,210px)}
+body.rezim-mise .scena-box svg{height:auto;position:absolute;left:0;right:0;top:50%;transform:translateY(-40%)}
+.scena-stav{position:absolute;left:16px;bottom:12px;display:flex;align-items:center;gap:10px;
+  background:rgba(10,27,48,.72);backdrop-filter:blur(6px);border:1px solid rgba(245,205,122,.3);padding:6px 12px;border-radius:999px;font-size:.72rem;color:#DCE6F3}
+.scena-stav .bar{width:110px;height:6px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}
+.scena-stav .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:9px;transition:width 1s ease}
+
+/* SVG animace */
+.vlna{animation:vlny 14s linear infinite}
+.vlna2{animation:vlny 22s linear infinite reverse;opacity:.55}
+@keyframes vlny{to{transform:translateX(-600px)}}
+.mrak{animation:mraky linear infinite}
+@keyframes mraky{from{transform:translateX(-260px)}to{transform:translateX(1460px)}}
+.hvezda{animation:trpyt 3.5s ease-in-out infinite}
+@keyframes trpyt{50%{opacity:.25}}
+.lodka{animation:lodka 46s linear infinite}
+@keyframes lodka{from{transform:translateX(-140px)}to{transform:translateX(1340px)}}
+.houpani{animation:houpani 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes houpani{50%{transform:translateY(3px) rotate(1.5deg)}}
+.prapor{animation:prapor 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:left center}
+@keyframes prapor{50%{transform:skewY(8deg) scaleX(.9)}}
+.hak{animation:hak 4s ease-in-out infinite;transform-origin:0 0}
+@keyframes hak{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.auto1{animation:jizda 9s linear infinite}
+.auto2{animation:jizda2 11s linear infinite;animation-delay:-4s}
+@keyframes jizda{from{transform:translateX(230px)}to{transform:translateX(960px)}}
+@keyframes jizda2{from{transform:translateX(960px) scaleX(-1)}to{transform:translateX(230px) scaleX(-1)}}
+.lampa{animation:lampa 2.6s ease-in-out infinite}
+@keyframes lampa{50%{opacity:.55}}
+.ohnostroj circle{transform-box:fill-box;transform-origin:center;animation:ohen 3.2s ease-out infinite;opacity:0}
+@keyframes ohen{0%{transform:scale(.1);opacity:0}10%{opacity:1}70%{opacity:.9}100%{transform:scale(1.6);opacity:0}}
+
+.stg{opacity:0;transition:opacity .9s ease;pointer-events:none}
+.stg.on{opacity:1}
+.stg.novy .rust{animation:rust 1.8s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes rust{from{transform:scaleY(0)}}
+.stg.novy .kresli{stroke-dasharray:1800;animation:kresli 2.4s ease both}
+@keyframes kresli{from{stroke-dashoffset:1800}to{stroke-dashoffset:0}}
+.stg.novy .zleva{animation:zleva 1.8s cubic-bezier(.2,.8,.2,1) both}
+.stg.novy .zprava{animation:zprava 1.8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes zleva{from{transform:translateX(-520px);opacity:0}}
+@keyframes zprava{from{transform:translateX(520px);opacity:0}}
+.stg.novy .shora{animation:shora 1.4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes shora{from{transform:translateY(-260px);opacity:0}}
+#nebeH,#nebeD{transition:stop-color 2s ease}
+
+/* Obrazovky */
+.obrazovka{display:none;animation:objev .5s ease both}
+.obrazovka.aktivni{display:block}
+@keyframes objev{from{opacity:0;transform:translateY(12px)}}
+.karta{background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);border-radius:20px;
+  box-shadow:0 24px 50px -18px rgba(0,0,0,.55),0 0 0 1px rgba(185,128,42,.25);position:relative}
+.karta::before{content:"";position:absolute;inset:8px;border:1px solid rgba(185,128,42,.28);border-radius:14px;pointer-events:none}
+
+/* Úvod */
+.uvod{max-width:720px;margin:-60px auto 0;padding:34px 34px 30px;position:relative;z-index:2}
+.uvod h2,.mise-hlava h2,.modal h2{font-family:var(--serif);font-weight:600;margin:0 0 10px;color:var(--ink)}
+.uvod h2{font-size:1.65rem}
+.uvod p{line-height:1.6;margin:0 0 14px}
+.kicker{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold3);font-weight:700;margin-bottom:6px}
+.pole-jmeno{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.pole-jmeno input{flex:1 1 240px;min-height:52px;font:inherit;font-size:1.05rem;padding:0 16px;border-radius:14px;border:2px solid #CDBF9F;background:#fffdf8;color:var(--ink)}
+.pole-jmeno input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(227,166,58,.25)}
+.btn-zlato{min-height:52px;padding:0 24px;border:0;border-radius:14px;font-weight:700;color:#2A1A04;letter-spacing:.01em;
+  background:linear-gradient(180deg,#FBD991,var(--gold) 55%,#C98A27);box-shadow:0 8px 18px -8px rgba(201,138,39,.9),inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .15s,box-shadow .2s,filter .2s}
+.btn-zlato:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn-zlato:active{transform:translateY(0)}
+.btn-zlato:disabled{opacity:.45;cursor:default;transform:none}
+.btn-modra{min-height:52px;padding:0 22px;border-radius:14px;font-weight:700;border:2px solid var(--blue);background:transparent;color:var(--blue)}
+.btn-modra:hover{background:rgba(23,59,102,.08)}
+.podpis{margin-top:22px;font-size:.72rem;color:var(--muted);text-align:right;font-style:italic}
+
+/* Hub */
+.hub-titul{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:26px 2px 14px;flex-wrap:wrap}
+.hub-titul h2{font-family:var(--serif);font-weight:600;margin:0;font-size:1.35rem;color:#fff}
+.hub-titul p{margin:0;color:#B9C8DC;font-size:.82rem}
+.mise-mrizka{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.mise-karta{text-align:left;border:0;padding:20px 20px 18px;min-height:150px;display:flex;flex-direction:column;gap:6px;
+  transition:transform .25s ease,box-shadow .25s ease}
+.mise-karta:not(:disabled):hover{transform:translateY(-5px);box-shadow:0 30px 50px -18px rgba(0,0,0,.6),0 0 0 2px var(--gold)}
+.mise-karta:disabled{cursor:default;filter:saturate(.3);opacity:.55}
+.mise-karta .cislo{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;font-family:var(--serif);font-weight:700;
+  background:linear-gradient(180deg,#FBD991,var(--gold));color:#2A1A04;box-shadow:0 4px 10px -4px rgba(201,138,39,.9)}
+.mise-karta .radek{display:flex;align-items:center;justify-content:space-between}
+.mise-karta h3{margin:6px 0 0;font-family:var(--serif);font-size:1.1rem;color:var(--ink)}
+.mise-karta .ucivo{font-size:.8rem;color:var(--muted);line-height:1.4}
+.stitek{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+.stitek.hotovo{background:var(--okbg);color:var(--ok)}
+.stitek.nove{background:#FFF1D2;color:var(--gold3)}
+.stitek.zamceno{background:#E7E3DA;color:#7C7A72}
+.mise-karta .hvezdy{font-size:.85rem;color:var(--gold3);letter-spacing:2px;margin-top:auto}
+.mise-karta.kolaudace{background:linear-gradient(135deg,#1C477A,#0F2B4D);color:#fff}
+.mise-karta.kolaudace::before{border-color:rgba(245,205,122,.45)}
+.mise-karta.kolaudace h3{color:var(--gold2)}
+.mise-karta.kolaudace .ucivo{color:#C9D6E8}
+.diplom-tlacitko{display:none;margin:22px auto 0}
+.diplom-tlacitko.on{display:flex}
+
+/* Mise */
+.mise-panel{margin-top:-28px;position:relative;z-index:2;padding:26px 28px 26px}
+.mise-hlava{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap}
+.mise-hlava h2{font-size:1.35rem;margin:0}
+.cihly{display:flex;gap:5px;flex-wrap:wrap;margin:14px 0 4px}
+.cihly i{width:30px;height:14px;border-radius:3px;background:#DDD3BF;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08);transition:background .4s,transform .4s}
+.cihly i.hotova{background:linear-gradient(180deg,#F2C46B,#D3922F);transform:translateY(-2px)}
+.cihly i.hotova.bez{background:linear-gradient(180deg,#F7D27F,#E3A63A);box-shadow:0 0 0 2px rgba(47,154,106,.5)}
+.cihly i.ted{background:var(--blue)}
+.uloha-cislo{font-size:.75rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:14px}
+.kontext{font-size:1.05rem;line-height:1.55;margin:6px 0 16px;max-width:760px}
+.prace{display:flex;justify-content:center;padding:18px 8px 10px;overflow-x:auto}
+.zpetna{min-height:56px;margin:10px 0 4px;border-radius:14px;padding:12px 16px;line-height:1.5;display:none;font-size:.95rem}
+.zpetna.on{display:block;animation:objev .35s ease both}
+.zpetna.ok{background:var(--okbg);color:#1E6B48;border-left:5px solid var(--ok)}
+.zpetna.rada{background:var(--hintbg);color:#7A3B14;border-left:5px solid var(--hint)}
+.zpetna.info{background:#E6EEF8;color:#1C3B63;border-left:5px solid var(--blue)}
+.zpetna b{font-weight:700}
+.akce{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+/* Počítání pod sebou */
+.sloupek{font-family:var(--mono);font-size:1.5rem;display:inline-flex;flex-direction:column;gap:4px;padding:14px 18px;border-radius:16px;
+  background:repeating-linear-gradient(0deg,transparent 0 calc(var(--cw) - 1px),rgba(23,59,102,.09) calc(var(--cw) - 1px) var(--cw)),
+             repeating-linear-gradient(90deg,transparent 0 calc(var(--cw) - 1px),rgba(23,59,102,.09) calc(var(--cw) - 1px) var(--cw)),#FFFDF8;
+  border:1px solid #DCCFB2}
+.rad{display:flex}
+.bunka{width:var(--cw);height:var(--cw);display:grid;place-items:center;color:var(--ink);position:relative}
+.bunka.mala{height:1.55em;font-size:.62em;color:var(--gold3)}
+.pozn-pamet{font-family:var(--sans);font-size:.55rem;color:var(--gold3);margin:0 0 -2px;text-align:right;padding-right:4px;letter-spacing:.04em}
+.cara{border-top:3px solid var(--ink);margin:2px 0}
+input.cif{width:calc(var(--cw) - 8px);height:calc(var(--cw) - 8px);text-align:center;font:inherit;font-weight:700;color:var(--blue);
+  border:2px solid #B8C7DA;border-radius:10px;background:#fff;padding:0;transition:border-color .2s,box-shadow .2s,background .3s}
+input.cif:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(227,166,58,.28)}
+input.cif.pamet{width:1.5em;height:1.5em;font-size:1em;border-width:1.5px;border-style:dashed;border-color:#DDB46A;color:var(--gold3);border-radius:7px}
+input.cif.spatne{border-color:var(--hint);background:var(--hintbg)}
+input.cif.dobre{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+input.cif.odhaleno{border-color:var(--blue);background:#E6EEF8}
+.bunka.zvyrazni{background:rgba(227,166,58,.22);border-radius:8px}
+.bunka.pouzito::after{content:"";position:absolute;bottom:3px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.bunka.nova{color:var(--gold3);font-weight:700}
+.rad.dalsi{animation:dolu .6s ease both}
+@keyframes dolu{from{opacity:0;transform:translateY(-14px)}}
+.del-obal{display:flex;align-items:flex-start;gap:0}
+.del-prava{display:flex;align-items:center;height:var(--cw);white-space:nowrap}
+.del-prava .zn{padding:0 .3em}
+.zb{font-family:var(--sans);font-size:.6em;color:var(--muted);padding-left:.5em}
+.krok-otazka{text-align:center;font-size:1.05rem;margin:8px 0 0;color:var(--ink);min-height:1.6em}
+.krok-otazka b{color:var(--blue)}
+.denik{list-style:none;padding:0;margin:10px auto 0;max-width:560px;font-size:.88rem;color:var(--muted)}
+.denik li{padding:3px 0;border-bottom:1px dashed #E0D5BE;animation:objev .4s ease both}
+.zkouska{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px;font-size:1.2rem;font-family:var(--mono)}
+.zkouska .stit{font-family:var(--sans);font-size:.8rem;font-weight:700;color:var(--gold3);text-transform:uppercase;letter-spacing:.08em}
+input.cislo{width:7.2em;min-height:52px;font:inherit;font-weight:700;text-align:center;border:2px solid #B8C7DA;border-radius:12px;color:var(--blue);background:#fff}
+input.cislo:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(227,166,58,.28)}
+input.cislo.spatne{border-color:var(--hint);background:var(--hintbg)}
+input.cislo.dobre{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+.priklad-velky{font-family:var(--mono);font-size:1.6rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;color:var(--ink)}
+.priklad-velky input.cislo{width:4.2em}
+.jednotka{font-family:var(--sans);font-size:1rem;color:var(--muted)}
+
+/* Volby */
+.volby{display:grid;gap:12px;width:100%;max-width:640px}
+.volba{min-height:58px;text-align:left;padding:12px 18px;border-radius:14px;border:2px solid #D2C5A8;background:#FFFDF8;color:var(--ink);font-size:1rem;line-height:1.4;
+  transition:border-color .2s,transform .15s,background .3s}
+.volba:hover:not(:disabled){border-color:var(--gold);transform:translateX(4px)}
+.volba.spatne{border-color:var(--hint);background:var(--hintbg);opacity:.7}
+.volba.dobre{border-color:var(--ok);background:var(--okbg);color:#1E6B48;font-weight:600}
+.volba:disabled{cursor:default}
+
+/* Modální okno */
+.zavoj{position:fixed;inset:0;background:rgba(5,14,26,.72);backdrop-filter:blur(5px);display:none;place-items:center;z-index:50;padding:16px}
+.zavoj.on{display:grid;animation:objev .35s ease both}
+.modal{max-width:560px;width:100%;padding:34px 30px 28px;text-align:center}
+.modal h2{font-size:1.6rem}
+.modal p{line-height:1.6;margin:0 0 14px}
+.medaile{width:110px;height:110px;margin:0 auto 10px;animation:medaile 1.1s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes medaile{from{transform:scale(0) rotate(-90deg)}}
+.velke-hvezdy{font-size:1.9rem;color:var(--gold);letter-spacing:6px;margin:4px 0 14px}
+.velke-hvezdy span{display:inline-block;animation:medaile .8s cubic-bezier(.2,1.4,.4,1) both}
+.konfety{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.konfety i{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:pad linear forwards}
+@keyframes pad{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* Diplom */
+.diplom{background:#FFFDF6;color:var(--ink);max-width:820px;width:100%;padding:44px 48px 36px;text-align:center;position:relative;border-radius:6px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
+.diplom::before{content:"";position:absolute;inset:14px;border:3px double var(--gold3);border-radius:4px;pointer-events:none}
+.diplom::after{content:"";position:absolute;inset:22px;border:1px solid rgba(185,128,42,.4);pointer-events:none}
+.diplom .d-kicker{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold3);font-weight:700}
+.diplom h2{font-family:var(--serif);font-size:2.6rem;margin:6px 0 4px;color:var(--ink);font-weight:600}
+.diplom .d-jmeno{font-family:var(--serif);font-size:2.1rem;font-style:italic;color:var(--blue);margin:18px 0 6px;border-bottom:1px solid #D9C9A3;display:inline-block;padding:0 30px 6px}
+.diplom .d-text{max-width:560px;margin:10px auto;line-height:1.6}
+.diplom .d-most{width:280px;margin:6px auto 0;display:block}
+.diplom .d-pata{display:flex;justify-content:space-between;align-items:end;margin-top:26px;font-size:.85rem;gap:20px}
+.diplom .d-podpis{text-align:center}
+.diplom .d-podpis .linka{width:240px;border-top:1px solid var(--ink);margin:0 auto 6px}
+.diplom .d-akce{display:flex;justify-content:center;gap:10px;margin-top:22px;position:relative;z-index:2}
+
+footer{margin-top:36px;text-align:center;font-size:.72rem;color:#8EA3BE}
+footer b{color:#C9D6E8;font-weight:600}
+
+@media (max-width:640px){
+  :root{--cw:2.2em}
+  .uvod,.mise-panel{padding:24px 18px 20px}
+  .sloupek{font-size:1.3rem;padding:10px}
+  .diplom{padding:34px 22px}
+  .diplom h2{font-size:1.9rem}
+  .diplom .d-pata{flex-direction:column;align-items:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body{background:#fff!important}
+  body::before{display:none}
+  body > *:not(#zavojDiplom){display:none!important}
+  #zavojDiplom{display:block!important;position:static;background:none;backdrop-filter:none;padding:0}
+  .diplom{box-shadow:none;max-width:none}
+  .d-akce{display:none!important}
+}
+</style>
+</head>
+<body class="rezim-intro">
+
+<div class="wrap" id="aplikace">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBD991"/><stop offset="1" stop-color="#C98A27"/></linearGradient></defs>
+        <circle cx="24" cy="24" r="22" fill="none" stroke="url(#lg)" stroke-width="2"/>
+        <path d="M8 30 Q24 10 40 30" fill="none" stroke="url(#lg)" stroke-width="2.4"/>
+        <path d="M6 31h36" stroke="#F7F2E7" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M15 22v9M24 18v13M33 22v9" stroke="#F7F2E7" stroke-width="1.4"/></svg>
+      <div><h1>Stavitelé mostu</h1><p>Písemné násobení a dělení do 10&nbsp;000 · 4.&nbsp;ročník</p></div>
+    </div>
+    <div class="ovladani">
+      <span class="hrac" id="hracJmeno"></span>
+      <button class="btn-ghost" id="pismoMensi" title="Menší písmo" aria-label="Menší písmo">A−</button>
+      <button class="btn-ghost" id="pismoVetsi" title="Větší písmo" aria-label="Větší písmo">A+</button>
+      <button class="btn-ghost" id="restart" title="Začít znovu">Začít znovu</button>
+    </div>
+  </header>
+
+  <div class="scena-box" id="scenaBox">
+    <svg id="scena" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Stavba mostu přes řeku">
+      <defs>
+        <linearGradient id="nebe" x1="0" y1="0" x2="0" y2="1">
+          <stop id="nebeH" offset="0" stop-color="#0B1F3A"/><stop id="nebeD" offset="1" stop-color="#2A5A8C"/>
+        </linearGradient>
+        <linearGradient id="voda" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D5687"/><stop offset="1" stop-color="#0A2440"/></linearGradient>
+        <linearGradient id="breh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A3A5E"/><stop offset="1" stop-color="#0A1B30"/></linearGradient>
+        <linearGradient id="ocel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9D8EA"/><stop offset=".5" stop-color="#F2F6FB"/><stop offset="1" stop-color="#9FB4CE"/></linearGradient>
+        <linearGradient id="zlato" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBD991"/><stop offset="1" stop-color="#C98A27"/></linearGradient>
+        <radialGradient id="mesic"><stop offset="0" stop-color="#FFF4D6"/><stop offset=".55" stop-color="#F5CD7A" stop-opacity=".35"/><stop offset="1" stop-color="#F5CD7A" stop-opacity="0"/></radialGradient>
+        <radialGradient id="svit"><stop offset="0" stop-color="#FFE7A8"/><stop offset="1" stop-color="#FFE7A8" stop-opacity="0"/></radialGradient>
+        <pattern id="mriz" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(190,220,255,.07)" stroke-width="1"/></pattern>
+      </defs>
+      <rect width="1200" height="500" fill="url(#nebe)"/>
+      <rect width="1200" height="500" fill="url(#mriz)"/>
+      <g id="hvezdy" fill="#FFF4D6"></g>
+      <circle cx="1010" cy="92" r="90" fill="url(#mesic)"/>
+      <circle cx="1010" cy="92" r="26" fill="#FFF1C9"/>
+      <g fill="#DCE8F6" opacity=".16">
+        <g class="mrak" style="animation-duration:70s"><ellipse cx="0" cy="70" rx="70" ry="16"/><ellipse cx="38" cy="60" rx="40" ry="16"/></g>
+        <g class="mrak" style="animation-duration:95s;animation-delay:-40s"><ellipse cx="0" cy="140" rx="90" ry="14"/><ellipse cx="-30" cy="130" rx="44" ry="14"/></g>
+        <g class="mrak" style="animation-duration:120s;animation-delay:-80s"><ellipse cx="0" cy="40" rx="60" ry="10"/></g>
+      </g>
+      <path d="M0 300 Q150 240 300 280 T600 270 T900 275 T1200 260 V400 H0Z" fill="#14365C" opacity=".75"/>
+      <path d="M0 320 Q200 280 420 310 T820 300 T1200 300 V400 H0Z" fill="#102E50" opacity=".9"/>
+
+      <!-- řeka -->
+      <rect y="370" width="1200" height="130" fill="url(#voda)"/>
+      <g opacity=".5" stroke="#9CC7EE" stroke-width="2" fill="none">
+        <path class="vlna" d="M0 395 q25 -8 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0"/>
+        <path class="vlna2" d="M0 435 q30 -9 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0"/>
+        <path class="vlna" style="animation-duration:18s" d="M0 470 q20 -6 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/>
+      </g>
+      <!-- odraz měsíce -->
+      <g opacity=".35" fill="#FFE7A8"><rect x="985" y="392" width="50" height="3" rx="2"/><rect x="995" y="408" width="30" height="3" rx="2"/><rect x="1000" y="424" width="20" height="2" rx="1"/></g>
+      <!-- loďka -->
+      <g class="lodka"><g class="houpani"><path d="M0 418 h46 l-8 12 h-30z" fill="#E7D6B0"/><path d="M22 380 v38" stroke="#E7D6B0" stroke-width="2"/><path d="M24 382 l18 30 h-18z" fill="#F7F2E7" opacity=".9"/></g></g>
+
+      <!-- základy pilířů ve vodě (skryté do mise 2) -->
+      <!-- ETAPA 1: vlajky geodetů -->
+      <g class="stg" id="st1" data-od="1" data-do="9">
+        <g stroke="#F7F2E7" stroke-width="2" fill="none">
+          <path d="M150 232 l-14 28 M150 232 l14 28 M150 232 v28"/>
+        </g>
+        <rect x="140" y="220" width="22" height="12" rx="2" fill="url(#zlato)"/>
+        <path d="M286 238 v-48" stroke="#F7F2E7" stroke-width="3"/>
+        <path class="prapor" d="M288 191 h30 l-8 9 l8 9 h-30z" fill="url(#zlato)"/>
+        <path d="M914 238 v-48" stroke="#F7F2E7" stroke-width="3"/>
+        <path class="prapor" d="M916 191 h30 l-8 9 l8 9 h-30z" fill="url(#zlato)"/>
+      </g>
+      <g class="stg" id="st1b" data-od="1" data-do="3">
+        <path class="kresli" d="M300 168 H900" stroke="#F5CD7A" stroke-width="2" stroke-dasharray="10 8" fill="none"/>
+        <path d="M300 158 v20 M900 158 v20" stroke="#F5CD7A" stroke-width="2"/>
+        <text x="600" y="158" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="20" fill="#F5CD7A">680 m</text>
+      </g>
+
+      <!-- ETAPA 2: pilíře -->
+      <g class="stg" id="st2" data-od="2" data-do="9">
+        <g class="rust">
+          <rect x="436" y="428" width="68" height="40" rx="4" fill="#3B5F86" stroke="#CFE0F2" stroke-width="1.5"/>
+          <rect x="452" y="95" width="10" height="340" fill="url(#ocel)"/>
+          <rect x="478" y="95" width="10" height="340" fill="url(#ocel)"/>
+          <rect x="446" y="86" width="48" height="12" rx="3" fill="url(#zlato)"/>
+          <path d="M462 140 h16 M462 300 h16 M462 380 h16" stroke="#E5EEF8" stroke-width="5"/>
+          <path d="M462 160 l16 40 M478 160 l-16 40" stroke="#CFE0F2" stroke-width="2"/>
+        </g>
+        <g class="rust" style="animation-delay:.25s">
+          <rect x="696" y="428" width="68" height="40" rx="4" fill="#3B5F86" stroke="#CFE0F2" stroke-width="1.5"/>
+          <rect x="712" y="95" width="10" height="340" fill="url(#ocel)"/>
+          <rect x="738" y="95" width="10" height="340" fill="url(#ocel)"/>
+          <rect x="706" y="86" width="48" height="12" rx="3" fill="url(#zlato)"/>
+          <path d="M722 140 h16 M722 300 h16 M722 380 h16" stroke="#E5EEF8" stroke-width="5"/>
+          <path d="M722 160 l16 40 M738 160 l-16 40" stroke="#CFE0F2" stroke-width="2"/>
+        </g>
+      </g>
+
+      <!-- ETAPA 3: jeřáb a materiál -->
+      <g class="stg" id="st3" data-od="3" data-do="5">
+        <g class="shora">
+          <rect x="566" y="440" width="68" height="16" rx="3" fill="#4B6F95" stroke="#CFE0F2"/>
+          <path d="M592 440 V110 M608 440 V110" stroke="#F5CD7A" stroke-width="3"/>
+          <path d="M592 440 l16 -30 l-16 -30 l16 -30 l-16 -30 l16 -30 l-16 -30 l16 -30 l-16 -30 l16 -30 l-16 -30 l16 -30" stroke="#E3A63A" stroke-width="1.5" fill="none"/>
+          <path d="M510 110 H780 M510 122 H780" stroke="#F5CD7A" stroke-width="3"/>
+          <path d="M600 110 V82 M600 82 L510 110 M600 82 L780 110" stroke="#F5CD7A" stroke-width="2"/>
+          <rect x="506" y="112" width="34" height="22" fill="#E3A63A"/>
+          <g transform="translate(720 122)"><g class="hak"><path d="M0 0 V82" stroke="#F7F2E7" stroke-width="1.5"/><path d="M-6 82 h12 v6 a6 6 0 0 1 -12 0z" fill="#F7F2E7"/><rect x="-26" y="92" width="52" height="8" rx="2" fill="#C98A27"/></g></g>
+        </g>
+        <g fill="#C98A27" stroke="#7A5418" stroke-width="1">
+          <rect x="40" y="218" width="70" height="7" rx="2"/><rect x="46" y="211" width="70" height="7" rx="2"/><rect x="52" y="204" width="64" height="7" rx="2"/>
+        </g>
+        <g fill="#B9C8DC"><rect x="1080" y="212" width="18" height="14" rx="2"/><rect x="1100" y="212" width="18" height="14" rx="2"/><rect x="1090" y="198" width="18" height="14" rx="2"/></g>
+      </g>
+
+      <!-- ETAPA 4: mostovka -->
+      <g class="stg" id="st4" data-od="4" data-do="9">
+        <g class="zleva">
+          <rect x="240" y="244" width="362" height="16" fill="#1E4E80" stroke="#CFE0F2" stroke-width="1.5"/>
+          <path d="M240 260 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 M240 276 H600" stroke="#9FB4CE" stroke-width="1.6" fill="none"/>
+          <rect x="240" y="240" width="362" height="5" fill="url(#zlato)"/>
+        </g>
+        <g class="zprava">
+          <rect x="598" y="244" width="362" height="16" fill="#1E4E80" stroke="#CFE0F2" stroke-width="1.5"/>
+          <path d="M600 260 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 l20 -16 l20 16 M600 276 H960" stroke="#9FB4CE" stroke-width="1.6" fill="none"/>
+          <rect x="598" y="240" width="362" height="5" fill="url(#zlato)"/>
+        </g>
+      </g>
+
+      <!-- břehy (přes ně vede mostovka) -->
+      <path d="M0 236 L230 240 L262 252 L300 330 L322 500 H0Z" fill="url(#breh)" stroke="rgba(207,224,242,.5)" stroke-width="1.5"/>
+      <path d="M1200 236 L970 240 L938 252 L900 330 L878 500 H1200Z" fill="url(#breh)" stroke="rgba(207,224,242,.5)" stroke-width="1.5"/>
+      <g fill="#0E2744">
+        <path d="M30 236 l14 -40 l14 40z"/><path d="M60 236 l10 -28 l10 28z"/><path d="M1150 236 l14 -44 l14 44z"/><path d="M1120 236 l10 -30 l10 30z"/>
+      </g>
+      <!-- městečko na pravém břehu -->
+      <g fill="#183C64" stroke="rgba(207,224,242,.35)">
+        <path d="M1010 236 v-30 l14 -12 l14 12 v30z"/><path d="M1044 236 v-22 l12 -10 l12 10 v22z"/><path d="M990 236 v-18 l10 -8 l10 8 v18z"/>
+      </g>
+      <g fill="#FFE7A8" opacity=".9"><rect x="1019" y="214" width="5" height="6"/><rect x="1028" y="214" width="5" height="6"/><rect x="1053" y="222" width="5" height="5"/></g>
+
+      <!-- ETAPA 5: lana a zábradlí -->
+      <g class="stg" id="st5" data-od="5" data-do="9">
+        <path class="kresli" id="lano" d="M240 242 Q360 150 470 92 Q600 262 730 92 Q840 150 960 242" fill="none" stroke="#F5CD7A" stroke-width="3.5"/>
+        <g id="zavesy" stroke="#E5EEF8" stroke-width="1.2" class="kresli"></g>
+        <path class="kresli" d="M240 232 H960" stroke="#E5EEF8" stroke-width="2"/>
+        <g id="sloupky" stroke="#E5EEF8" stroke-width="1.2"></g>
+      </g>
+
+      <!-- ETAPA 6: slavnost -->
+      <g class="stg" id="st6" data-od="6" data-do="9">
+        <g id="lampy"></g>
+        <g class="auto1"><g transform="translate(0 222)"><rect x="-18" y="0" width="36" height="12" rx="4" fill="#E3A63A"/><path d="M-10 0 l5 -7 h12 l5 7z" fill="#F7D27F"/><circle cx="-10" cy="13" r="3.5" fill="#0A1B30"/><circle cx="10" cy="13" r="3.5" fill="#0A1B30"/><circle cx="18" cy="5" r="2" fill="#FFF4D6"/></g></g>
+        <g class="auto2"><g transform="translate(0 222)"><rect x="-16" y="0" width="32" height="12" rx="4" fill="#CFE0F2"/><path d="M-8 0 l4 -7 h10 l4 7z" fill="#F7F2E7"/><circle cx="-9" cy="13" r="3.5" fill="#0A1B30"/><circle cx="9" cy="13" r="3.5" fill="#0A1B30"/><circle cx="16" cy="5" r="2" fill="#FFF4D6"/></g></g>
+        <g class="ohnostroj">
+          <circle cx="330" cy="90" r="38" fill="none" stroke="#F5CD7A" stroke-width="3" stroke-dasharray="4 8"/>
+          <circle cx="860" cy="70" r="44" fill="none" stroke="#9CC7EE" stroke-width="3" stroke-dasharray="4 8" style="animation-delay:1.1s"/>
+          <circle cx="600" cy="50" r="34" fill="none" stroke="#F7D27F" stroke-width="3" stroke-dasharray="3 7" style="animation-delay:2.1s"/>
+        </g>
+        <g fill="#F5CD7A"><path d="M590 232 l10 -14 l10 14z" opacity=".95"/></g>
+      </g>
+    </svg>
+    <div class="scena-stav"><span id="stavText">Most: 0 z 6 částí</span><span class="bar"><i id="stavBar" style="width:0"></i></span></div>
+  </div>
+
+  <!-- ÚVOD -->
+  <section class="obrazovka" id="obrUvod">
+    <div class="karta uvod">
+      <div class="kicker">Nová stavba · 4. ročník</div>
+      <h2 id="uvodNadpis"></h2>
+      <p id="uvodText"></p>
+      <p><b>Jak se staví?</b> Splň mise jednu po druhé. Každá mise přidá kus mostu. Když se spleteš, nic se neděje: dostaneš nápovědu a druhý pokus.</p>
+      <div class="pole-jmeno">
+        <input id="jmenoVstup" type="text" maxlength="30" placeholder="Napiš své jméno" autocomplete="off" aria-label="Tvoje jméno">
+        <button class="btn-zlato" id="start">Nastoupit na stavbu</button>
+      </div>
+      <div class="podpis" id="podpisUvod"></div>
+    </div>
+  </section>
+
+  <!-- HUB -->
+  <section class="obrazovka" id="obrHub">
+    <div class="hub-titul">
+      <div><h2 id="hubPozdrav"></h2><p id="hubPodtitul"></p></div>
+    </div>
+    <div class="mise-mrizka" id="miseMrizka"></div>
+    <button class="btn-zlato diplom-tlacitko" id="otevritDiplom">Zobrazit diplom</button>
+  </section>
+
+  <!-- MISE -->
+  <section class="obrazovka" id="obrMise">
+    <div class="karta mise-panel">
+      <div class="mise-hlava">
+        <div><div class="kicker" id="miseKicker"></div><h2 id="miseNazev"></h2></div>
+        <button class="btn-modra" id="zpet" style="min-height:44px">Zpět na stavbu</button>
+      </div>
+      <div class="cihly" id="cihly" aria-hidden="true"></div>
+      <div class="uloha-cislo" id="ulohaCislo"></div>
+      <div class="kontext" id="kontext"></div>
+      <div class="prace" id="prace"></div>
+      <div class="zpetna" id="zpetna" role="status" aria-live="polite"></div>
+      <div class="akce" id="akce"></div>
+    </div>
+  </section>
+
+  <footer>Výuková aplikace · <b id="autorPata"></b></footer>
+</div>
+
+<!-- Modální okna -->
+<div class="zavoj" id="zavojModal"><div class="karta modal" id="modal"></div></div>
+<div class="zavoj" id="zavojDiplom"><div class="diplom" id="diplom"></div></div>
+<div class="konfety" id="konfety"></div>
+
+<script>
+// =====================================================================
+// ===== DATA HRY: zde učitel upravuje obsah =====
+// Typy úloh:
+//   zbytek   : dělení se zbytkem zpaměti         { typ, a, b }
+//   nasobeni : písemné násobení pod sebou         { typ, a, b, kontext }
+//   deleni   : písemné dělení krok za krokem      { typ, a, b, zkouska:true, kontext }
+//   volba    : výběr z možností                   { typ, zadani, moznosti:[...], spravne:"text správné možnosti", napoveda, vysvetleni }
+//   cislo    : odpověď číslem                     { typ, zadani, spravne, jednotka, napoveda, vysvetleni, chyby:{ chybnaOdpoved:"cílená nápověda" } }
+// =====================================================================
+const HRA = {
+  nazev: "Stavitelé mostu",
+  rocnik: "4. ročník",
+  klic: "4-mat-stavitele-mostu-v1",
+  autor: "Mgr. Helena Gřivová (vytvořeno pomocí AI)",
+  uvod: "Městečko Rovinka leží na břehu široké řeky. Na druhý břeh se lidé dostanou jen starým přívozem, a ten se právě porouchal. Starosta potřebuje nový most a hledá stavbyvedoucí, který umí přesně počítat. Každá splněná mise přidá kus mostu. Zvládneš to?",
+  pochvaly: ["Výborně!","Přesně tak!","Skvělá práce, stavbyvedoucí!","Správně, most roste!","Paráda!","Statik by byl spokojený!","Bez chybičky!","Jako opravdový inženýr!"],
+  povzbuzeni: ["Nevadí, zkus to ještě jednou.","To se stává i stavitelům. Zkus to znovu.","Skoro! Podívej se na nápovědu."],
+
+  mise: [
+    {
+      nazev: "Zaměření terénu", ucivo: "Rozcvička: dělení se zbytkem zpaměti",
+      uvod: "Než začneme stavět, musíme řeku přeměřit. Geodeti dělí kolíky do skupin. Kolik dostane každá skupina a kolik kolíků zbude?",
+      odmena: "Řeka je zaměřená. Na březích vlají vlajky geodetů!",
+      ulohy: [
+        {typ:"zbytek", a:17, b:5}, {typ:"zbytek", a:26, b:4}, {typ:"zbytek", a:39, b:6}, {typ:"zbytek", a:45, b:7},
+        {typ:"zbytek", a:58, b:9}, {typ:"zbytek", a:50, b:6}, {typ:"zbytek", a:83, b:9}, {typ:"zbytek", a:71, b:8}
+      ]
+    },
+    {
+      nazev: "Materiál na pilíře", ucivo: "Písemné násobení jednociferným činitelem",
+      uvod: "Pilíře potřebují spoustu materiálu. Počítej pod sebou zprava doleva: jednotky, desítky, stovky, tisíce. Čísla, která si pamatuješ, si můžeš zapsat do malých okének nahoře.",
+      odmena: "Z řeky vyrostly dva mohutné pilíře!",
+      ulohy: [
+        {typ:"nasobeni", a:2132, b:3, kontext:"Jedna vrstva pilíře má 2 132 cihel. Kolik cihel mají 3 vrstvy?"},
+        {typ:"nasobeni", a:4021, b:2, kontext:"Jeden náklad písku váží 4 021 kg. Kolik kilogramů váží 2 náklady?"},
+        {typ:"nasobeni", a:1214, b:4, kontext:"Na jednu část pilíře je potřeba 1 214 šroubů. Kolik šroubů potřebují 4 části?"},
+        {typ:"nasobeni", a:1325, b:3, kontext:"Jeden kamion přiveze 1 325 dlaždic. Kolik dlaždic přivezou 3 kamiony?"},
+        {typ:"nasobeni", a:2147, b:4, kontext:"Jeden pilíř potřebuje 2 147 litrů vody do betonu. Kolik litrů potřebují 4 pilíře?"},
+        {typ:"nasobeni", a:1836, b:5, kontext:"Jedna paleta nese 1 836 cihel. Kolik cihel je na 5 paletách?"},
+        {typ:"nasobeni", a:1457, b:6, kontext:"Jeden ocelový nosník měří 1 457 mm. Kolik milimetrů měří 6 nosníků za sebou?"},
+        {typ:"nasobeni", a:1208, b:7, kontext:"Za jeden den dělníci položí 1 208 kamenů. Kolik kamenů položí za 7 dní?"},
+        {typ:"nasobeni", a:2475, b:4, kontext:"Jedna cívka lana má 2 475 cm. Kolik centimetrů lana je na 4 cívkách?"},
+        {typ:"nasobeni", a:1096, b:9, kontext:"Jeden betonový blok váží 1 096 kg. Kolik kilogramů váží 9 bloků?"}
+      ]
+    },
+    {
+      nazev: "Rozpočet stavby", ucivo: "Odhad, slovní úlohy, pořadí početních výkonů",
+      uvod: "Než objednáme materiál, musíme odhadnout a spočítat, kolik ho bude. Pozor: násobení a dělení mají přednost před sčítáním a odčítáním. Nejdřív se počítá v závorce.",
+      odmena: "Rozpočet sedí. Na stavbu dorazil velký jeřáb!",
+      ulohy: [
+        {typ:"volba", zadani:"Odhadni výsledek 2 316 · 3. Mezi kterými čísly bude?",
+          moznosti:["Mezi 6 000 a 9 000","Mezi 600 a 900","Mezi 9 000 a 10 000","Mezi 3 000 a 6 000"], spravne:"Mezi 6 000 a 9 000",
+          napoveda:"Zaokrouhli 2 316 na tisíce dolů i nahoru: 2 000 · 3 a 3 000 · 3.",
+          vysvetleni:"2 000 · 3 = 6 000 a 3 000 · 3 = 9 000. Číslo 2 316 leží mezi 2 000 a 3 000, proto je výsledek mezi 6 000 a 9 000 (přesně 6 948)."},
+        {typ:"volba", zadani:"Bude součin 1 875 · 5 menší než 10 000?",
+          moznosti:["Ano, protože 1 875 < 2 000 a 2 000 · 5 = 10 000","Ne, bude větší než 10 000","Nedá se to odhadnout"], spravne:"Ano, protože 1 875 < 2 000 a 2 000 · 5 = 10 000",
+          napoveda:"Zaokrouhli 1 875 nahoru na tisíce. Kolik je 2 000 · 5?",
+          vysvetleni:"1 875 je menší než 2 000. Když 2 000 · 5 = 10 000, musí být 1 875 · 5 menší (přesně 9 375)."},
+        {typ:"cislo", zadani:"Na stavbu přijely 4 palety. Na každé je 1 250 cihel. Kolik cihel přijelo celkem?", spravne:5000, jednotka:"cihel",
+          napoveda:"Vynásob 1 250 · 4. Klidně si to napiš pod sebe do sešitu.",
+          vysvetleni:"1 250 · 4 = 5 000. Přijelo 5 000 cihel.", chyby:{"1254":"Pozor, cihly nesčítáme s počtem palet. Násobíme 1 250 · 4."}},
+        {typ:"cislo", zadani:"Tři nákladní auta vezou písek. Každé veze 1 875 kg. Kolik kilogramů písku přivezou?", spravne:5625, jednotka:"kg",
+          napoveda:"Vynásob písemně 1 875 · 3. Nezapomeň na čísla, která si pamatuješ.",
+          vysvetleni:"1 875 · 3 = 5 625 kg.", chyby:{"3625":"V řádu tisíců jsi asi zapomněl/a přičíst zapamatované číslo.","5325":"Zkontroluj řád stovek: 3 · 8 = 24 a přičti, co si pamatuješ."}},
+        {typ:"cislo", zadani:"Na most je potřeba 6 lan. Každé měří 1 480 cm. Kolik centimetrů lana je potřeba?", spravne:8880, jednotka:"cm",
+          napoveda:"Vynásob 1 480 · 6.",
+          vysvetleni:"1 480 · 6 = 8 880 cm."},
+        {typ:"cislo", zadani:"Stavbyvedoucí koupil 3 pytle cementu po 245 Kč a jednu lopatu za 1 090 Kč. Kolik zaplatil celkem?", spravne:1825, jednotka:"Kč",
+          napoveda:"Nejdřív spočítej cenu cementu (245 · 3), pak přičti lopatu.",
+          vysvetleni:"245 · 3 = 735 Kč za cement. 735 + 1 090 = 1 825 Kč.",
+          chyby:{"735":"To je jen cena cementu. Ještě přičti lopatu za 1 090 Kč.","4005":"Lopata byla jen jedna. Vynásob jen cenu cementu."}},
+        {typ:"cislo", zadani:"Vypočítej: 200 + 3 600 : 4", spravne:1100, jednotka:"",
+          napoveda:"Dělení má přednost před sčítáním. Nejdřív 3 600 : 4.",
+          vysvetleni:"3 600 : 4 = 900. Potom 200 + 900 = 1 100.", chyby:{"950":"Počítal/a jsi zleva. Dělení má ale přednost před sčítáním!"}},
+        {typ:"cislo", zadani:"Vypočítej: 600 · 7 − 2 400 : 6", spravne:3800, jednotka:"",
+          napoveda:"Násobení a dělení mají přednost. Spočítej 600 · 7 a 2 400 : 6, pak odečti.",
+          vysvetleni:"600 · 7 = 4 200 a 2 400 : 6 = 400. Potom 4 200 − 400 = 3 800.", chyby:{"300":"Tady není závorka. Nejdřív násob a děl, až potom odčítej."}},
+        {typ:"cislo", zadani:"Vypočítej: (4 200 − 2 400) : 6", spravne:300, jednotka:"",
+          napoveda:"Nejdřív vypočítej závorku.",
+          vysvetleni:"4 200 − 2 400 = 1 800. Potom 1 800 : 6 = 300.", chyby:{"3800":"Závorka má přednost! Nejdřív 4 200 − 2 400."}}
+      ]
+    },
+    {
+      nazev: "Rozdělení trámů", ucivo: "Písemné dělení jednociferným dělitelem a zkouška",
+      uvod: "Materiál se musí spravedlivě rozdělit. Děl písemně zleva doprava, krok za krokem: kolikrát se dělitel vejde, kolik zbude, připíšu další číslici. Na konci si výsledek ověř zkouškou.",
+      odmena: "Mostovka je hotová. Oba břehy se poprvé spojily!",
+      ulohy: [
+        {typ:"deleni", a:8462, b:2, zkouska:true, kontext:"8 462 šroubů rozdělíme rovným dílem do 2 beden. Kolik šroubů bude v každé bedně?"},
+        {typ:"deleni", a:6396, b:3, zkouska:true, kontext:"6 396 cihel rozdělíme mezi 3 party. Kolik cihel dostane každá parta? (Tohle číslo už znáš z pilířů!)"},
+        {typ:"deleni", a:5172, b:4, zkouska:true, kontext:"5 172 prken rozdělíme na 4 stejné hromady. Kolik prken bude na každé?"},
+        {typ:"deleni", a:2856, b:4, zkouska:true, kontext:"2 856 nýtů rozdělíme do 4 krabic. Kolik nýtů bude v každé krabici?"},
+        {typ:"deleni", a:4374, b:6, zkouska:true, kontext:"4 374 m kabelu rozdělíme na 6 stejných kusů. Kolik metrů bude měřit každý kus?"},
+        {typ:"deleni", a:6125, b:7, zkouska:true, kontext:"6 125 kg barvy rozdělíme do 7 sudů. Kolik kilogramů bude v každém sudu?"},
+        {typ:"deleni", a:3840, b:4, zkouska:true, kontext:"3 840 trámů rozdělíme mezi 4 jeřáby. Kolik trámů zvedne každý jeřáb?"},
+        {typ:"deleni", a:4216, b:4, zkouska:true, kontext:"4 216 podložek rozdělíme do 4 pytlů. Kolik podložek bude v každém pytli? Pozor, uprostřed se skrývá past!"},
+        {typ:"deleni", a:7248, b:8, zkouska:true, kontext:"7 248 dlaždic rozdělíme mezi 8 dělníků. Kolik dlaždic položí každý?"},
+        {typ:"deleni", a:5418, b:6, zkouska:true, kontext:"5 418 kamenů rozdělíme na 6 úseků mostu. Kolik kamenů přijde na každý úsek?"}
+      ]
+    },
+    {
+      nazev: "Kontrola statika", ucivo: "Dělení se zbytkem, zkouška se zbytkem, hledání chyb",
+      uvod: "Statik kontroluje každý výpočet. Někdy při dělení něco zbude. Pamatuj: při zkoušce musíš zbytek přičíst. A někdy se v cizím výpočtu skrývá chyba. Najdeš ji?",
+      odmena: "Lana jsou napnutá, zábradlí stojí. Most je skoro hotový!",
+      ulohy: [
+        {typ:"deleni", a:3497, b:5, zkouska:true, kontext:"3 497 dlaždic rozdělíme mezi 5 part. Kolik dostane každá parta a kolik zbude?"},
+        {typ:"deleni", a:8659, b:9, zkouska:true, kontext:"8 659 šroubů rozdělíme do 9 beden. Kolik bude v každé a kolik zbude?"},
+        {typ:"deleni", a:2645, b:7, zkouska:true, kontext:"2 645 cihel rozdělíme na 7 palet. Kolik bude na každé paletě a kolik zbude?"},
+        {typ:"deleni", a:1235, b:4, zkouska:true, kontext:"1 235 kg cementu rozdělíme do 4 míchaček. Kolik kilogramů dostane každá a kolik zbude?"},
+        {typ:"deleni", a:2759, b:4, zkouska:true, kontext:"2 759 nýtů rozdělíme mezi 4 dělníky. Kolik dostane každý a kolik zbude?"},
+        {typ:"volba", zadani:"Pomocník Tonda vypočítal: 4 216 : 4 = 154. Má pravdu?",
+          moznosti:["Ne, chybí nula v podílu. Správně je 1 054.","Ano, je to správně.","Ne, správně je 1 504.","Ne, správně je 10 054."], spravne:"Ne, chybí nula v podílu. Správně je 1 054.",
+          napoveda:"Udělej zkoušku: 154 · 4 = ? Vyjde 4 216?",
+          vysvetleni:"154 · 4 = 616, to není 4 216. Když se 4 nevejde do 2, musíme do podílu zapsat 0. Správně: 4 216 : 4 = 1 054, protože 1 054 · 4 = 4 216."},
+        {typ:"volba", zadani:"Kamila vypočítala 3 497 : 5 = 699, zbytek 2. Zkoušku napsala takto: 699 · 5 = 3 495. Je zkouška hotová?",
+          moznosti:["Ne, musí ještě přičíst zbytek: 3 495 + 2 = 3 497","Ano, zkouška je hotová","Ne, musí zbytek odečíst: 3 495 − 2 = 3 493","Ne, výsledek dělení je špatně"], spravne:"Ne, musí ještě přičíst zbytek: 3 495 + 2 = 3 497",
+          napoveda:"Zkouška má dát původní číslo 3 497. Co ještě chybí?",
+          vysvetleni:"Při zkoušce dělení se zbytkem vynásobíme podíl dělitelem a přičteme zbytek: 699 · 5 + 2 = 3 497. Teprve teď zkouška sedí."},
+        {typ:"cislo", zadani:"Zábradlí mostu je dlouhé celkem 1 450 m a je stejně dlouhé na obou stranách. Kolik metrů zábradlí je na jedné straně?", spravne:725, jednotka:"m",
+          napoveda:"Rozděl 1 450 na 2 stejné části: 1 450 : 2.",
+          vysvetleni:"1 450 : 2 = 725. Na každé straně je 725 m zábradlí. Zkouška: 725 · 2 = 1 450.", chyby:{"2900":"Zábradlí se dělí na dvě strany, nenásobíme. Vyděl 1 450 : 2."}}
+      ]
+    }
+  ],
+
+  kolaudace: {
+    nazev: "Kolaudace mostu", ucivo: "Závěrečná zkouška ze všech misí",
+    uvod: "Velký den! Komise přijela zkontrolovat celý most. Vyřeš poslední úkoly ze všech misí a most slavnostně otevřeme.",
+    odmena: "Páska je přestřižena! Po novém mostě projíždějí první auta.",
+    vyber: [1, 2, 2, 2, 1]   // kolik úloh se náhodně vybere z mise 1, 2, 3, 4, 5
+  },
+
+  diplom: {
+    titul: "Mistr stavitel mostů",
+    text: "úspěšně postavil/a most přes řeku v městečku Rovinka a prokázal/a, že umí písemně násobit a dělit v oboru do 10 000."
+  }
+};
+
+// =====================================================================
+// ===== ENGINE: tuto část není potřeba upravovat =====
+// =====================================================================
+(function(){
+const $ = s => document.querySelector(s);
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const nahodny = arr => arr[Math.floor(Math.random()*arr.length)];
+const zamichej = arr => { const a = arr.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const RADY = ["jednotek","desítek","stovek","tisíců","desetitisíců"];
+const POCET_CASTI = HRA.mise.length + 1;
+
+// ---------- Stav a ukládání ----------
+const vychozi = () => ({ jmeno:"", hotovo:[], hvezdy:{}, napoprve:0, celkem:0, pismo:19, kolSada:null, datum:null });
+let S = vychozi();
+function nacti(){ try { const t = localStorage.getItem(HRA.klic); if (t) S = Object.assign(vychozi(), JSON.parse(t)); } catch(e){} }
+function uloz(){ try { localStorage.setItem(HRA.klic, JSON.stringify(S)); } catch(e){} }
+
+// ---------- Scéna ----------
+function pripravScenu(){
+  const hv = $("#hvezdy");
+  for (let i=0;i<46;i++){
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx", Math.round(Math.random()*1200)); c.setAttribute("cy", Math.round(Math.random()*200));
+    c.setAttribute("r", (Math.random()*1.4+.4).toFixed(1)); c.setAttribute("class","hvezda");
+    c.style.animationDelay = (Math.random()*3.5).toFixed(2)+"s"; hv.appendChild(c);
+  }
+  // závěsná lana: body na laně spočítané z kvadratických křivek
+  const seg = [[240,242,360,150,470,92],[470,92,600,262,730,92],[730,92,840,150,960,242]];
+  const body = [];
+  seg.forEach(s => { for (let t=0;t<=1;t+=0.005){ const u=1-t; body.push([u*u*s[0]+2*u*t*s[2]+t*t*s[4], u*u*s[1]+2*u*t*s[3]+t*t*s[5]]); } });
+  const yNa = x => { let b = body[0]; body.forEach(p => { if (Math.abs(p[0]-x) < Math.abs(b[0]-x)) b = p; }); return b[1]; };
+  let d = "";
+  for (let x=270;x<=930;x+=20){ if (Math.abs(x-470)<16 || Math.abs(x-730)<16) continue; d += `M${x} ${yNa(x).toFixed(1)} V232 `; }
+  const p = document.createElementNS("http://www.w3.org/2000/svg","path"); p.setAttribute("d", d); p.setAttribute("fill","none"); p.setAttribute("class","kresli"); $("#zavesy").appendChild(p);
+  let ds = ""; for (let x=250;x<=950;x+=25) ds += `M${x} 232 V242 `;
+  const ps = document.createElementNS("http://www.w3.org/2000/svg","path"); ps.setAttribute("d", ds); $("#sloupky").appendChild(ps);
+  const lampy = $("#lampy");
+  for (let x=300;x<=900;x+=100){
+    lampy.insertAdjacentHTML("beforeend",
+      `<path d="M${x} 232 V206 h6" stroke="#E5EEF8" stroke-width="2" fill="none"/><circle class="lampa" cx="${x+6}" cy="207" r="16" fill="url(#svit)" style="animation-delay:${(x/300).toFixed(2)}s"/><circle cx="${x+6}" cy="207" r="3" fill="#FFF4D6"/>`);
+  }
+}
+function vykresliScenu(novaCast){
+  const n = S.hotovo.length;
+  document.querySelectorAll("#scena .stg").forEach(g => {
+    const od = +g.dataset.od, doo = +g.dataset.do;
+    const on = n >= od && n <= doo;
+    g.classList.toggle("on", on);
+    g.classList.remove("novy");
+    if (on && novaCast && od === n) { void g.getBBox(); g.classList.add("novy"); }
+  });
+  const sv = n / POCET_CASTI;
+  const top = mix([11,31,58],[44,74,120],sv), bot = mix([42,90,140],[240,178,110],sv);
+  $("#nebeH").setAttribute("stop-color", `rgb(${top})`); $("#nebeD").setAttribute("stop-color", `rgb(${bot})`);
+  $("#stavText").textContent = `Most: ${n} z ${POCET_CASTI} částí`;
+  $("#stavBar").style.width = (sv*100)+"%";
+}
+const mix = (a,b,t) => a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(",");
+
+// ---------- Obrazovky ----------
+function ukaz(id, rezim){
+  document.querySelectorAll(".obrazovka").forEach(o => o.classList.toggle("aktivni", o.id === id));
+  document.body.className = "rezim-" + rezim;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function hlavicka(){ $("#hracJmeno").innerHTML = S.jmeno ? `Stavbyvedoucí: <b></b>` : ""; if (S.jmeno) $("#hracJmeno b").textContent = S.jmeno; }
+
+function hub(novaCast){
+  hlavicka();
+  $("#hubPozdrav").textContent = S.hotovo.length >= POCET_CASTI ? `Most je hotový, ${S.jmeno}!` : `Vítej na stavbě, ${S.jmeno}!`;
+  $("#hubPodtitul").textContent = S.hotovo.length >= POCET_CASTI ? "Diplom si můžeš kdykoli zobrazit a vytisknout. Mise si můžeš zopakovat." : "Vyber si další misi. Mise se odemykají postupně.";
+  const m = $("#miseMrizka"); m.innerHTML = "";
+  const vse = HRA.mise.map((x,i)=>({...x, idx:i})).concat([{...HRA.kolaudace, idx:HRA.mise.length, kol:true}]);
+  vse.forEach(x => {
+    const hotova = S.hotovo.includes(x.idx);
+    const odemcena = x.idx === 0 || S.hotovo.includes(x.idx-1);
+    const b = el("button", "karta mise-karta" + (x.kol ? " kolaudace" : ""));
+    b.disabled = !odemcena;
+    const r = el("div","radek");
+    r.appendChild(el("span","cislo", x.kol ? "★" : String(x.idx+1)));
+    r.appendChild(el("span","stitek " + (hotova?"hotovo":odemcena?"nove":"zamceno"), hotova?"Splněno":odemcena?"Připraveno":"Zamčeno"));
+    b.appendChild(r);
+    b.appendChild(el("h3", null, x.nazev));
+    b.appendChild(el("div","ucivo", x.ucivo));
+    if (hotova && S.hvezdy[x.idx] != null) b.appendChild(el("div","hvezdy", "★".repeat(S.hvezdy[x.idx]) + "☆".repeat(3-S.hvezdy[x.idx])));
+    b.addEventListener("click", () => startMise(x.idx));
+    m.appendChild(b);
+  });
+  $("#otevritDiplom").classList.toggle("on", S.hotovo.length >= POCET_CASTI);
+  ukaz("obrHub","hub");
+  vykresliScenu(novaCast);
+}
+
+// ---------- Mise ----------
+let M = null; // {idx, ulohy, i, napoprve, vysledky:[]}
+function startMise(idx){
+  let ulohy, info;
+  if (idx === HRA.mise.length){
+    info = HRA.kolaudace;
+    if (!S.kolSada || S.hotovo.includes(idx)) {
+      S.kolSada = [];
+      HRA.kolaudace.vyber.forEach((pocet, mi) => {
+        const indexy = zamichej(HRA.mise[mi].ulohy.map((_,i)=>i)).slice(0,pocet).sort((a,b)=>a-b);
+        indexy.forEach(ui => S.kolSada.push([mi,ui]));
+      });
+      uloz();
+    }
+    ulohy = S.kolSada.map(([mi,ui]) => HRA.mise[mi].ulohy[ui]);
+  } else { info = HRA.mise[idx]; ulohy = info.ulohy; }
+  M = { idx, info, ulohy, i:0, napoprve:0, vysledky:[] };
+  modal(`<div class="kicker">${idx===HRA.mise.length?"Závěrečná mise":"Mise "+(idx+1)}</div><h2></h2><p></p><div class="akce" style="justify-content:center"><button class="btn-zlato" id="mOk">Jdeme na to</button></div>`,
+    m => { m.querySelector("h2").textContent = info.nazev; m.querySelector("p").textContent = info.uvod; });
+  $("#mOk").onclick = () => { zavriModal(); ukaz("obrMise","mise"); vykresliScenu(false); uloha(); };
+}
+
+function cihly(){
+  const c = $("#cihly"); c.innerHTML = "";
+  M.ulohy.forEach((_,i) => { const b = el("i"); if (i < M.i) { b.className = "hotova" + (M.vysledky[i] ? " bez" : ""); } else if (i === M.i) b.className = "ted"; c.appendChild(b); });
+}
+
+function uloha(){
+  const u = M.ulohy[M.i];
+  $("#miseKicker").textContent = M.idx === HRA.mise.length ? "Závěrečná mise" : `Mise ${M.idx+1}`;
+  $("#miseNazev").textContent = M.info.nazev;
+  $("#ulohaCislo").textContent = `Úloha ${M.i+1} z ${M.ulohy.length}`;
+  cihly();
+  const zp = $("#zpetna"); zp.className = "zpetna"; zp.innerHTML = "";
+  const ak = $("#akce"); ak.innerHTML = "";
+  const pr = $("#prace"); pr.innerHTML = "";
+  $("#kontext").textContent = u.kontext || u.zadani || "";
+  const api = {
+    zprava(typ, html){ zp.className = "zpetna on " + typ; zp.innerHTML = html; },
+    tlacitko(text, fn, cls){ ak.innerHTML = ""; if (!text) return; const b = el("button", cls || "btn-zlato", text); b.onclick = fn; ak.appendChild(b); return b; },
+    hotovo(napoprve){
+      M.vysledky[M.i] = napoprve; if (napoprve) M.napoprve++;
+      S.celkem++; if (napoprve) S.napoprve++; uloz();
+      api.tlacitko(M.i+1 < M.ulohy.length ? "Další úloha" : "Dokončit misi", dalsi);
+      setTimeout(()=>{ const b = ak.querySelector("button"); if (b) b.focus(); }, 60);
+    }
+  };
+  ({zbytek:ulZbytek, nasobeni:ulNasobeni, deleni:ulDeleni, volba:ulVolba, cislo:ulCislo})[u.typ](u, pr, api);
+}
+function dalsi(){
+  M.i++;
+  if (M.i < M.ulohy.length) { uloha(); return; }
+  cihly();
+  const pomer = M.napoprve / M.ulohy.length;
+  const hv = pomer >= .85 ? 3 : pomer >= .6 ? 2 : 1;
+  const nova = !S.hotovo.includes(M.idx);
+  if (nova) S.hotovo.push(M.idx);
+  S.hvezdy[M.idx] = Math.max(S.hvezdy[M.idx] || 0, hv);
+  if (M.idx === HRA.mise.length && !S.datum) S.datum = new Date().toLocaleDateString("cs-CZ");
+  uloz();
+  konfety();
+  const posledni = M.idx === HRA.mise.length;
+  modal(`<svg class="medaile" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="url(#zlato)" stroke="#B9802A" stroke-width="3"/><circle cx="50" cy="50" r="34" fill="none" stroke="#FFF4D6" stroke-width="2" stroke-dasharray="3 5"/><path d="M26 58 Q50 30 74 58" fill="none" stroke="#2A1A04" stroke-width="4"/><path d="M22 60h56" stroke="#2A1A04" stroke-width="4" stroke-linecap="round"/></svg>
+    <div class="kicker">Mise splněna</div><h2></h2><div class="velke-hvezdy">${[0,1,2].map(i=>`<span style="animation-delay:${.3+i*.2}s">${i<hv?"★":"☆"}</span>`).join("")}</div>
+    <p id="mOdmena"></p><p style="font-size:.85rem;color:var(--muted)">Napoprvé správně: ${M.napoprve} z ${M.ulohy.length}</p>
+    <div class="akce" style="justify-content:center">${posledni?'<button class="btn-zlato" id="mDiplom">Převzít diplom</button>':''}<button class="${posledni?'btn-modra':'btn-zlato'}" id="mOk">Podívat se na most</button></div>`,
+    m => { m.querySelector("h2").textContent = M.info.nazev; m.querySelector("#mOdmena").textContent = M.info.odmena; });
+  $("#mOk").onclick = () => { zavriModal(); hub(nova); };
+  if (posledni) $("#mDiplom").onclick = () => { zavriModal(); hub(nova); setTimeout(diplom, 2200); };
+}
+
+// ---------- Pomocné pro vstupy ----------
+function cifPole(cls){ const i = el("input","cif" + (cls?" "+cls:"")); i.type="text"; i.inputMode="numeric"; i.maxLength=1; i.autocomplete="off"; i.setAttribute("aria-label","číslice"); return i; }
+function cisloPole(){ const i = el("input","cislo"); i.type="text"; i.inputMode="numeric"; i.autocomplete="off"; i.setAttribute("aria-label","odpověď"); return i; }
+const precti = v => { const t = String(v).replace(/[\s ]/g,""); return /^\d+$/.test(t) ? parseInt(t,10) : null; };
+const pochvala = () => nahodny(HRA.pochvaly);
+const enter = (inp, fn) => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fn(); } });
+
+// ---------- Úloha: dělení se zbytkem zpaměti ----------
+function ulZbytek(u, pr, api){
+  $("#kontext").textContent = "Vyděl zpaměti. Napiš výsledek a zbytek.";
+  const q = Math.floor(u.a/u.b), r = u.a % u.b;
+  const box = el("div","priklad-velky");
+  box.appendChild(el("span",null,`${u.a} : ${u.b} =`));
+  const iq = cisloPole(); box.appendChild(iq);
+  box.appendChild(el("span","jednotka","zbytek"));
+  const ir = cisloPole(); box.appendChild(ir);
+  pr.appendChild(box);
+  let pokus = 0;
+  const kontrola = () => {
+    const vq = precti(iq.value), vr = precti(ir.value);
+    if (vq === null || vr === null) { api.zprava("info","Doplň výsledek i zbytek. Když nic nezbude, napiš 0."); return; }
+    if (vq === q && vr === r) {
+      iq.className = ir.className = "cislo dobre"; iq.disabled = ir.disabled = true;
+      api.zprava("ok", `<b>${pochvala()}</b> ${u.a} : ${u.b} = ${q}, zbytek ${r}. Zkouška: ${q} · ${u.b} + ${r} = ${u.a}.`);
+      api.hotovo(pokus === 0); return;
+    }
+    pokus++;
+    iq.className = "cislo" + (vq !== q ? " spatne" : ""); ir.className = "cislo" + (vr !== r ? " spatne" : "");
+    if (pokus === 1) {
+      let rada;
+      if (vr >= u.b) rada = `Zbytek musí být vždy menší než dělitel ${u.b}. Zkus větší výsledek.`;
+      else if (vq * u.b > u.a) rada = `${vq} · ${u.b} = ${vq*u.b}, to je víc než ${u.a}. Zkus menší výsledek.`;
+      else if (vq !== q) rada = `Najdi největší násobek čísla ${u.b}, který se vejde do ${u.a}.`;
+      else rada = `Výsledek ${q} je správně. Zbytek spočítáš takto: ${u.a} − ${q} · ${u.b}.`;
+      api.zprava("rada", `${nahodny(HRA.povzbuzeni)} <b>Nápověda:</b> ${rada}`);
+    } else {
+      iq.value = q; ir.value = r; iq.className = ir.className = "cislo dobre"; iq.disabled = ir.disabled = true;
+      api.zprava("info", `<b>Řešení:</b> ${q} · ${u.b} = ${q*u.b}. Do ${u.a} chybí ještě ${r}, to je zbytek. ${u.a} : ${u.b} = ${q}, zbytek ${r}.`);
+      api.hotovo(false);
+    }
+  };
+  enter(iq, () => ir.focus()); enter(ir, kontrola);
+  api.tlacitko("Zkontrolovat", kontrola);
+  setTimeout(()=>iq.focus(), 50);
+}
+
+// ---------- Úloha: písemné násobení ----------
+function ulNasobeni(u, pr, api){
+  const aS = String(u.a), vys = u.a * u.b, vS = String(vys);
+  const sloupce = aS.length + 1;
+  // přenosy (pro nápovědu a odhalení)
+  const cif = aS.split("").map(Number).reverse();
+  const prenos = [0]; const zapis = [];
+  cif.forEach((d,k) => { const t = d*u.b + prenos[k]; zapis[k] = t; prenos[k+1] = Math.floor(t/10); });
+  const bezPrenosu = cif.map((d,k)=> k === cif.length-1 ? String(d*u.b) : String((d*u.b)%10)).reverse().join("");
+
+  const s = el("div","sloupek");
+  const pozn = el("div","pozn-pamet","pamatuji si"); s.appendChild(pozn);
+  const rP = el("div","rad"); const pametPole = [];
+  for (let c=0;c<sloupce;c++){
+    const b = el("div","bunka mala");
+    const k = sloupce-1-c; // řád, nad kterým okénko je
+    if (k >= 1 && k <= aS.length-1) { const i = cifPole("pamet"); i.setAttribute("aria-label","zapamatované číslo nad řádem "+RADY[k]); b.appendChild(i); pametPole[k] = i; }
+    rP.appendChild(b);
+  }
+  s.appendChild(rP);
+  const rA = el("div","rad");
+  for (let c=0;c<sloupce;c++){ const ix = c-1; rA.appendChild(el("div","bunka", ix>=0 ? aS[ix] : "")); }
+  s.appendChild(rA);
+  const rB = el("div","rad");
+  for (let c=0;c<sloupce;c++) rB.appendChild(el("div","bunka", c===0 ? "·" : c===sloupce-1 ? String(u.b) : ""));
+  s.appendChild(rB);
+  s.appendChild(el("div","cara"));
+  const rV = el("div","rad"); const pole = []; // pole[k] = vstup pro řád k
+  for (let c=0;c<sloupce;c++){
+    const k = sloupce-1-c; const b = el("div","bunka");
+    if (k < vS.length) { const i = cifPole(); i.setAttribute("aria-label","výsledek, řád "+RADY[k]); b.appendChild(i); pole[k] = i; }
+    rV.appendChild(b);
+  }
+  s.appendChild(rV);
+  pr.appendChild(s);
+  const kontextPuv = u.kontext ? u.kontext + " " : "";
+  $("#kontext").textContent = kontextPuv + `Vypočítej písemně ${fmt(u.a)} · ${u.b}.`;
+
+  pole.forEach((i,k) => {
+    i.addEventListener("input", () => { i.value = i.value.replace(/\D/g,"").slice(-1); i.classList.remove("spatne"); if (i.value && pole[k+1]) pole[k+1].focus(); });
+    i.addEventListener("keydown", e => { if (e.key==="Backspace" && !i.value && pole[k-1]) { pole[k-1].focus(); } if (e.key==="Enter") kontrola(); });
+  });
+  pametPole.forEach(i => { if (i) i.addEventListener("input", () => { i.value = i.value.replace(/\D/g,"").slice(-1); }); });
+
+  let pokus = 0;
+  function kontrola(){
+    const zad = pole.map(i => i.value).reverse().join("");
+    if (pole.some(i => i.value === "")) { api.zprava("info","Doplň všechna políčka výsledku. Začni vpravo, u jednotek."); return; }
+    if (zad === vS) {
+      pole.forEach(i => { i.className = "cif dobre"; i.disabled = true; });
+      api.zprava("ok", `<b>${pochvala()}</b> ${fmt(u.a)} · ${u.b} = ${fmt(vys)}.`);
+      api.hotovo(pokus === 0); return;
+    }
+    pokus++;
+    // první chybný řád zprava
+    let k = 0; while (k < vS.length && pole[k].value === vS[vS.length-1-k]) k++;
+    if (pokus === 1) {
+      pole[k].classList.add("spatne");
+      const d = cif[k];
+      let rada;
+      if (zad === bezPrenosu) rada = "Zapomněl/a jsi přičítat čísla, která si pamatuješ z předchozího řádu. Zapiš si je do malých okének nahoře.";
+      else if (k < cif.length) rada = `Podívej se na řád ${RADY[k]}: kolik je ${u.b} · ${d}` + (prenos[k] ? ` a kolik si pamatuješ z řádu ${RADY[k-1]}?` : "?");
+      else rada = `Na začátek výsledku zapiš číslo, které si pamatuješ z řádu ${RADY[k-1]}.`;
+      api.zprava("rada", `${nahodny(HRA.povzbuzeni)} <b>Nápověda:</b> ${rada}`);
+      pole[k].focus();
+    } else {
+      // odhalení s postupem
+      const kroky = [];
+      cif.forEach((d,j) => {
+        const t = zapis[j];
+        let txt = `${RADY[j][0].toUpperCase()+RADY[j].slice(1)}: ${u.b} · ${d} = ${d*u.b}` + (prenos[j] ? ` + ${prenos[j]} = ${t}` : "");
+        txt += j === cif.length-1 ? `, zapíšu ${t}.` : `, zapíšu ${t%10}` + (Math.floor(t/10) ? ` a ${Math.floor(t/10)} si pamatuji.` : ".");
+        kroky.push(txt);
+      });
+      pole.forEach((i,j) => { setTimeout(() => { i.value = vS[vS.length-1-j]; i.className = "cif odhaleno"; i.disabled = true; }, j*260); });
+      pametPole.forEach((i,j) => { if (i) { i.value = prenos[j] || ""; i.disabled = true; } });
+      api.zprava("info", `<b>Řešení krok za krokem:</b><br>${kroky.join("<br>")}<br>Výsledek: <b>${fmt(vys)}</b>`);
+      api.hotovo(false);
+    }
+  }
+  api.tlacitko("Zkontrolovat", kontrola);
+  setTimeout(()=>pole[0].focus(), 60);
+}
+
+// ---------- Úloha: písemné dělení krok za krokem ----------
+function ulDeleni(u, pr, api){
+  const aS = String(u.a), n = aS.length, dig = aS.split("").map(Number);
+  // příprava kroků
+  let konec = 0, cast = dig[0];
+  while (cast < u.b && konec < n-1) { konec++; cast = cast*10 + dig[konec]; }
+  const kroky = [];
+  while (true) {
+    const q = Math.floor(cast/u.b), r = cast - q*u.b;
+    kroky.push({cast, konec, q, r});
+    if (konec === n-1) break;
+    konec++; cast = r*10 + dig[konec];
+  }
+  const podil = parseInt(kroky.map(k=>k.q).join(""),10), zbytek = kroky[kroky.length-1].r;
+  $("#kontext").textContent = (u.kontext ? u.kontext + " " : "") + `Vyděl písemně ${fmt(u.a)} : ${u.b}.`;
+
+  const s = el("div","sloupek");
+  const obal = el("div","del-obal");
+  const levy = el("div");
+  const horni = el("div","rad"); const horniBunky = [];
+  dig.forEach(d => { const b = el("div","bunka", String(d)); horni.appendChild(b); horniBunky.push(b); });
+  levy.appendChild(horni);
+  const prava = el("div","del-prava");
+  prava.appendChild(el("span","zn",":")); prava.appendChild(el("span",null,String(u.b))); prava.appendChild(el("span","zn","="));
+  const qPole = kroky.map(() => { const i = cifPole(); i.setAttribute("aria-label","číslice podílu"); i.disabled = true; prava.appendChild(i); return i; });
+  const zbEl = el("span","zb",""); prava.appendChild(zbEl);
+  obal.appendChild(levy); obal.appendChild(prava);
+  s.appendChild(obal);
+  pr.appendChild(s);
+  const box = el("div"); box.style.width = "100%";
+  const otazka = el("div","krok-otazka");
+  const denik = el("ul","denik");
+  pr.style.flexDirection = "column"; pr.style.alignItems = "center";
+  pr.appendChild(otazka); pr.appendChild(denik);
+
+  const radkyZbytku = [];
+  function radekCisla(txt, kon){
+    const r = el("div","rad dalsi");
+    for (let c=0;c<n;c++){ const off = kon - c; const ch = (off >= 0 && off < txt.length) ? txt[txt.length-1-off] : ""; const b = el("div","bunka", ch); r.appendChild(b); }
+    levy.appendChild(r); radkyZbytku.push(r); return r;
+  }
+  let krok = 0, chyby = 0, pokusKrok = 0;
+  function zvyrazni(){
+    horniBunky.forEach(b => b.classList.remove("zvyrazni"));
+    radkyZbytku.forEach(r => r.querySelectorAll(".bunka").forEach(b => b.classList.remove("zvyrazni")));
+    const k = kroky[krok];
+    if (krok === 0) { for (let c=0;c<=k.konec;c++) horniBunky[c].classList.add("zvyrazni"); }
+    else { const r = radkyZbytku[radkyZbytku.length-1]; r.querySelectorAll(".bunka").forEach(b => { if (b.textContent) b.classList.add("zvyrazni"); }); }
+  }
+  function zahajKrok(){
+    const k = kroky[krok]; pokusKrok = 0;
+    zvyrazni();
+    let uvod = "";
+    if (krok === 0 && k.konec > 0) uvod = `${u.b} se do ${dig[0]} nevejde, proto začínáme číslem ${k.cast}. `;
+    otazka.innerHTML = `${uvod}Kolikrát se <b>${u.b}</b> vejde do <b>${k.cast}</b>?`;
+    const i = qPole[krok]; i.disabled = false; i.value = ""; i.className = "cif"; i.focus();
+    i.oninput = () => { i.value = i.value.replace(/\D/g,"").slice(-1); if (i.value !== "") over(i); };
+  }
+  function over(i){
+    const k = kroky[krok], g = parseInt(i.value,10);
+    if (g === k.q) { i.className = "cif dobre"; i.disabled = true; i.oninput = null; potvrdKrok(false); return; }
+    pokusKrok++; chyby++;
+    i.className = "cif spatne";
+    if (pokusKrok === 1) {
+      let rada;
+      if (k.cast < u.b) rada = `${u.b} se do ${k.cast} nevejde ani jednou. Jakou číslici zapíšeš do podílu?`;
+      else if (g*u.b > k.cast) rada = `To je moc. ${g} · ${u.b} = ${g*u.b}, a to je víc než ${k.cast}.`;
+      else rada = `Vejde se tam víckrát. Zbylo by ${k.cast - g*u.b}, a to je víc než ${u.b}.`;
+      api.zprava("rada", `<b>Nápověda:</b> ${rada}`);
+      setTimeout(()=>{ i.value = ""; i.focus(); }, 650);
+    } else {
+      i.value = k.q; i.className = "cif odhaleno"; i.disabled = true; i.oninput = null;
+      api.zprava("info", `Správně je <b>${k.q}</b>: ${k.q} · ${u.b} = ${k.q*u.b}` + (k.cast < u.b ? `. Když se dělitel nevejde, zapíšeme do podílu 0.` : `, to se do ${k.cast} ještě vejde.`));
+      potvrdKrok(true);
+    }
+  }
+  function potvrdKrok(odhaleno){
+    const k = kroky[krok];
+    if (!odhaleno) $("#zpetna").className = "zpetna";
+    let zaznam = `${k.q} · ${u.b} = ${k.q*u.b}, ${k.cast} − ${k.q*u.b} = ${k.r}`;
+    if (krok < kroky.length-1) {
+      const dalsiK = kroky[krok+1];
+      zaznam += `, připíšu ${dig[dalsiK.konec]} → ${dalsiK.cast}`;
+      horniBunky[dalsiK.konec].classList.add("pouzito");
+      const r = radekCisla(String(dalsiK.cast), dalsiK.konec);
+      r.children[dalsiK.konec].classList.add("nova");
+    } else {
+      zaznam += k.r ? `. Zbytek je ${k.r}.` : ". Nic nezbylo.";
+      radekCisla(String(k.r), k.konec);
+    }
+    denik.appendChild(el("li",null,zaznam));
+    krok++;
+    if (krok < kroky.length) setTimeout(zahajKrok, odhaleno ? 1400 : 450);
+    else setTimeout(konecDeleni, 500);
+  }
+  function konecDeleni(){
+    horniBunky.forEach(b => b.classList.remove("zvyrazni"));
+    radkyZbytku.forEach(r => r.querySelectorAll(".bunka").forEach(b => b.classList.remove("zvyrazni")));
+    zbEl.textContent = zbytek ? `zb. ${zbytek}` : "";
+    if (!u.zkouska) { otazka.innerHTML = ""; uzavri(); return; }
+    otazka.innerHTML = `Podíl je <b>${fmt(podil)}</b>${zbytek ? `, zbytek <b>${zbytek}</b>` : ""}. Teď zkouška: ověř, že vyjde ${fmt(u.a)}.`;
+    const z = el("div","zkouska");
+    z.appendChild(el("span","stit","Zkouška"));
+    z.appendChild(el("span",null, `${fmt(podil)} · ${u.b}` + (zbytek ? ` + ${zbytek}` : "") + " ="));
+    const iz = cisloPole(); z.appendChild(iz);
+    pr.appendChild(z);
+    let pz = 0;
+    const kz = () => {
+      const v = precti(iz.value);
+      if (v === null) { api.zprava("info","Napiš výsledek zkoušky."); return; }
+      if (v === u.a) { iz.className = "cislo dobre"; iz.disabled = true; uzavri(); return; }
+      pz++; chyby++; iz.className = "cislo spatne";
+      if (pz === 1) {
+        const rada = (zbytek && v === podil*u.b) ? `Nezapomeň přičíst zbytek ${zbytek}!` : `Vynásob ${fmt(podil)} · ${u.b} písemně (do sešitu), ${zbytek ? "přičti zbytek " + zbytek + " " : ""}a podívej se, jestli vyjde ${fmt(u.a)}.`;
+        api.zprava("rada", `<b>Nápověda:</b> ${rada}`); iz.focus();
+      } else {
+        iz.value = fmt(u.a); iz.className = "cislo dobre"; iz.disabled = true;
+        api.zprava("info", `Zkouška: ${fmt(podil)} · ${u.b} = ${fmt(podil*u.b)}` + (zbytek ? `, plus zbytek ${zbytek} je ${fmt(u.a)}` : "") + `. Vyšlo původní číslo, dělení je správně.`);
+        uzavri(true);
+      }
+    };
+    enter(iz, kz);
+    api.tlacitko("Zkontrolovat zkoušku", kz);
+    setTimeout(()=>iz.focus(), 60);
+  }
+  function uzavri(poOdhaleni){
+    api.tlacitko(null);
+    const t = `${fmt(u.a)} : ${u.b} = ${fmt(podil)}` + (zbytek ? `, zbytek ${zbytek}` : "");
+    if (!poOdhaleni) api.zprava(chyby ? "info" : "ok", chyby ? `<b>Hotovo.</b> ${t}. Příště to půjde ještě lépe!` : `<b>${pochvala()}</b> ${t}. Zkouška sedí!`);
+    api.hotovo(chyby === 0);
+  }
+  api.tlacitko(null);
+  setTimeout(zahajKrok, 200);
+}
+
+// ---------- Úloha: výběr z možností ----------
+function ulVolba(u, pr, api){
+  const v = el("div","volby"); let pokus = 0;
+  zamichej(u.moznosti).forEach(t => {
+    const b = el("button","volba",t);
+    b.onclick = () => {
+      if (t === u.spravne) {
+        v.querySelectorAll("button").forEach(x => x.disabled = true); b.classList.add("dobre");
+        api.zprava("ok", `<b>${pochvala()}</b> ${u.vysvetleni}`); api.hotovo(pokus === 0); return;
+      }
+      pokus++; b.classList.add("spatne"); b.disabled = true;
+      if (pokus === 1) api.zprava("rada", `${nahodny(HRA.povzbuzeni)} <b>Nápověda:</b> ${u.napoveda}`);
+      else {
+        v.querySelectorAll("button").forEach(x => { x.disabled = true; if (x.textContent === u.spravne) x.classList.add("dobre"); });
+        api.zprava("info", `<b>Řešení:</b> ${u.vysvetleni}`); api.hotovo(false);
+      }
+    };
+    v.appendChild(b);
+  });
+  pr.appendChild(v);
+  api.tlacitko(null);
+}
+
+// ---------- Úloha: odpověď číslem ----------
+function ulCislo(u, pr, api){
+  const box = el("div","priklad-velky");
+  const i = cisloPole(); box.appendChild(i);
+  if (u.jednotka) box.appendChild(el("span","jednotka",u.jednotka));
+  pr.appendChild(box);
+  let pokus = 0;
+  const kontrola = () => {
+    const v = precti(i.value);
+    if (v === null) { api.zprava("info","Napiš odpověď číslem."); return; }
+    if (v === u.spravne) { i.className = "cislo dobre"; i.disabled = true; api.zprava("ok", `<b>${pochvala()}</b> ${u.vysvetleni}`); api.hotovo(pokus === 0); return; }
+    pokus++; i.className = "cislo spatne";
+    if (pokus === 1) {
+      const cil = u.chyby && u.chyby[String(v)];
+      api.zprava("rada", `${nahodny(HRA.povzbuzeni)} <b>Nápověda:</b> ${cil || u.napoveda}`); i.focus(); i.select();
+    } else {
+      i.value = fmt(u.spravne); i.className = "cislo dobre"; i.disabled = true;
+      api.zprava("info", `<b>Řešení:</b> ${u.vysvetleni}`); api.hotovo(false);
+    }
+  };
+  enter(i, kontrola);
+  api.tlacitko("Zkontrolovat", kontrola);
+  setTimeout(()=>i.focus(), 60);
+}
+
+// ---------- Modální okna, konfety, diplom ----------
+function modal(html, fn){ const m = $("#modal"); m.innerHTML = html; if (fn) fn(m); $("#zavojModal").classList.add("on"); setTimeout(()=>{ const b = m.querySelector("button"); if (b) b.focus(); }, 80); }
+function zavriModal(){ $("#zavojModal").classList.remove("on"); }
+function konfety(){
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const k = $("#konfety"); const barvy = ["#F5CD7A","#E3A63A","#F7F2E7","#9CC7EE","#FBD991","#2F9A6A"];
+  for (let i=0;i<90;i++){
+    const c = el("i"); c.style.left = Math.random()*100 + "vw"; c.style.background = nahodny(barvy);
+    c.style.animationDuration = (2.4 + Math.random()*2.4) + "s"; c.style.animationDelay = (Math.random()*.6) + "s";
+    c.style.transform = `rotate(${Math.random()*360}deg)`; if (Math.random() < .4) c.style.borderRadius = "50%";
+    k.appendChild(c);
+  }
+  setTimeout(() => k.innerHTML = "", 5600);
+}
+function diplom(){
+  const d = $("#diplom");
+  d.innerHTML = `
+    <div class="d-kicker">Diplom</div>
+    <h2></h2>
+    <svg class="d-most" viewBox="0 0 280 70" aria-hidden="true"><path d="M10 52 Q75 30 100 12 Q140 50 180 12 Q205 30 270 52" fill="none" stroke="#C98A27" stroke-width="2.5"/><path d="M10 54 H270" stroke="#14243C" stroke-width="3"/><path d="M98 12 V66 M182 12 V66" stroke="#14243C" stroke-width="3"/><path d="M30 54 V46 M50 54 V40 M70 54 V33 M120 54 V34 M140 54 V40 M160 54 V34 M210 54 V33 M230 54 V40 M250 54 V46" stroke="#14243C" stroke-width="1"/></svg>
+    <div class="d-jmeno" id="dJmeno"></div>
+    <p class="d-text" id="dText"></p>
+    <p class="d-text" style="font-size:.85rem;color:var(--muted)" id="dStat"></p>
+    <div class="d-pata"><div>Datum: <b id="dDatum"></b></div>
+      <div class="d-podpis"><div class="linka"></div><div id="dAutor"></div></div></div>
+    <div class="d-akce"><button class="btn-zlato" id="dTisk">Vytisknout diplom</button><button class="btn-modra" id="dZavri">Zavřít</button></div>`;
+  d.querySelector("h2").textContent = HRA.diplom.titul;
+  $("#dJmeno").textContent = S.jmeno;
+  $("#dText").textContent = HRA.diplom.text;
+  $("#dStat").textContent = `${HRA.nazev} · ${HRA.rocnik} · napoprvé správně ${S.napoprve} z ${S.celkem} úloh`;
+  $("#dDatum").textContent = S.datum || new Date().toLocaleDateString("cs-CZ");
+  $("#dAutor").textContent = HRA.autor;
+  $("#dTisk").onclick = () => window.print();
+  $("#dZavri").onclick = () => $("#zavojDiplom").classList.remove("on");
+  $("#zavojDiplom").classList.add("on");
+}
+
+// ---------- Ovládání ----------
+function pismo(z){ S.pismo = Math.min(26, Math.max(16, (S.pismo||19) + z)); document.documentElement.style.setProperty("--fs", S.pismo + "px"); uloz(); }
+function init(){
+  nacti(); pripravScenu();
+  document.documentElement.style.setProperty("--fs", (S.pismo||19) + "px");
+  $("#uvodNadpis").textContent = "Most pro Rovinku";
+  $("#uvodText").textContent = HRA.uvod;
+  $("#podpisUvod").textContent = HRA.autor;
+  $("#autorPata").textContent = HRA.autor;
+  $("#pismoMensi").onclick = () => pismo(-1);
+  $("#pismoVetsi").onclick = () => pismo(1);
+  $("#restart").onclick = () => { if (confirm("Opravdu chceš začít celou stavbu znovu? Postup se smaže.")) { const p = S.pismo; S = vychozi(); S.pismo = p; uloz(); M = null; zavriModal(); $("#zavojDiplom").classList.remove("on"); hlavicka(); $("#jmenoVstup").value = ""; ukaz("obrUvod","intro"); vykresliScenu(false); } };
+  $("#zpet").onclick = () => { if (confirm("Opravdu chceš misi opustit? Rozpracovaná mise se začne znovu.")) hub(false); };
+  $("#otevritDiplom").onclick = diplom;
+  const start = () => { const j = $("#jmenoVstup").value.trim(); if (!j) { $("#jmenoVstup").focus(); $("#jmenoVstup").placeholder = "Nejdřív napiš své jméno"; return; } S.jmeno = j; uloz(); hub(false); };
+  $("#start").onclick = start; enter($("#jmenoVstup"), start);
+  if (S.jmeno) hub(false); else { ukaz("obrUvod","intro"); vykresliScenu(false); }
+}
+init();
+})();
+</script>
+</body>
+</html>
